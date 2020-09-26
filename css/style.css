@@ -1,4 +1,4 @@
-/* ================================= 
+/* =================================
   Base Element Styles
 ==================================== */
 
@@ -21,7 +21,7 @@ body {
 }
 
 header {
-	text-align: center;  
+	text-align: center;
 }
 
 h1 {
@@ -34,7 +34,7 @@ a {
   text-decoration: none;
 }
 
-/* ================================= 
+/* =================================
   Form Element Styles
 ==================================== */
 
@@ -58,7 +58,7 @@ fieldset {
 
 legend,
 button {
-	font-size: 1.25em;	
+	font-size: 1.25em;
 }
 
 legend {
@@ -80,9 +80,10 @@ label {
 	margin-bottom: .5em;
 }
 
+
 input,
 select {
-	margin-bottom: 1.125em;	
+	margin-bottom: 1.125em;
 }
 
 input {
@@ -121,13 +122,13 @@ button:hover {
 	background: #6F9DDC;
 }
 
-input, 
-select, 
+input,
+select,
 option {
 	font-family: 'roboto', sans-serif;
 }
 
-/* ================================= 
+/* =================================
   Page Styles
 ==================================== */
 
@@ -166,7 +167,13 @@ option {
 	border-radius: 4px;
 }
 
-/* ================================= 
+.disabled{
+	color: gray;
+	display: block;
+	margin-bottom: .5em;
+}
+
+/* =================================
   Helper Classes
 ==================================== */
 
@@ -180,7 +187,25 @@ option {
   clear: both;
 }
 
-/* ================================= 
+.isValid{
+  background: url(../img/check.png);
+  background-position: right;
+  background-size: 30px;
+  background-repeat: no-repeat;
+  border-color: green;
+  background-color: #C9FFEC;
+
+}
+.notValid{
+  background: url(../img/error.png);
+  background-position: right;
+  background-size: 30px;
+  background-repeat: no-repeat;
+  background-color: #ffcccb;
+  border-color: red;
+}
+
+/* =================================
   Media Queries
 ==================================== */
 

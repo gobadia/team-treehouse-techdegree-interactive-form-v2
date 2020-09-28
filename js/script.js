@@ -40,10 +40,12 @@ document.addEventListener('DOMContentLoaded', (e)=>{
   //get payment type dropdown
   const paymentType = document.getElementById('payment');
   //hide payment fields by default
-  document.getElementById('credit-card').style.display ='none';
+  document.getElementById('credit-card').style.display ='block';
   document.getElementById('paypal').style.display ='none';
   document.getElementById('bitcoin').style.display ='none';
 
+  paymentType.getElementsByTagName('option')[1].selected = 'selected';
+  paymentType.getElementsByTagName('option')[0].disabled = true;
 
 
   //hide the "other" job field by default
@@ -90,13 +92,10 @@ document.addEventListener('DOMContentLoaded', (e)=>{
       const design = t_design.value;
       // if design is selected, show colors available for that design
       if(design){
-        currentOptions[0].selected =false;
-        currentOptions[0].style.display ='none';
-
         let firstOption = 0;
-        for(let j=1; j<currentOptions.length; j++){
+        for(let j=0; j<currentOptions.length; j++){
           // replace heart icon in color options in order to use lookup to match design name. hide other options
-          const color = (currentOptions[j].text.indexOf('♥')>0)? currentOptions[j].text.replace('♥','heart').toLowerCase(): currentOptions[j].text.toLowerCase();
+          const color = (currentOptions[j].text.indexOf('♥')>=0)? currentOptions[j].text.replace('♥','heart').toLowerCase(): currentOptions[j].text.toLowerCase();
           if(color.indexOf(design)>=0){
             currentOptions[j].style.display ='block';
             //assign the index of the first option that's displayed in order to select it
@@ -108,6 +107,7 @@ document.addEventListener('DOMContentLoaded', (e)=>{
             currentOptions[j].style.display ='none';
           }
         }
+
         currentOptions[firstOption].selected =true;
 
         t_color_block.style.display = 'block';
@@ -117,69 +117,40 @@ document.addEventListener('DOMContentLoaded', (e)=>{
     // Add event listener for change
     document.addEventListener('change',(e)=>{
       //Workshop Selection condition to verify if checkbox
+
       if(e.target.type ==='checkbox'){
         const workshopName= e.target.name;
         const workshopDayTime = e.target.getAttribute("data-day-and-time");
-        const workshopCost = parseInt(e.target.getAttribute("data-cost"));
-        // Check if it's been submitted without a workshop selected previously and remove it if now selected
-        if(activities.classList.contains('notValid')){
-          activities.classList.remove("notValid");
+        let workshopCost = parseInt(e.target.getAttribute("data-cost"));
 
+        //check if form was already submitted without activities to remove the class once clicked
+        if(e.target.checked && activities.classList.contains('notValid')){
+            activities.classList.remove("notValid");
+        }
+        //if checkbox is being unchecked, then price needs to be removed
+        else if(!e.target.checked){
+          workshopCost = -1 * workshopCost; //multiplied by -1 to since it's being removed
+          console.log(workshopCost);
+        }
+        //adjust total price
+        totalCost += workshopCost;
+        // hide events at the same time
+        for(let l=1; l<workshops.length; l++){
+          const dateTime = workshops[l].getAttribute("data-day-and-time");
+
+          if(workshopDayTime === dateTime && workshopName !==workshops[l].name){
+            workshops[l].disabled = e.target.checked; //will resolve to true if checked, false if not
+            workshops[l].parentElement.className = e.target.checked? 'disabled': ''; // if being checked, disable activities at matching times, if being uncheck, uncheck them
+          }
         }
 
-        if(e.target.checked){
-          totalCost += workshopCost;
-          // if they choose the main workshop, hide other elements since it contains all
-          if(workshopName ==='all'){
-            for(let k=1; k<workshops.length; k++){
-              workshops[k].disabled = true;
-              workshops[k].parentElement.className = 'disabled';
-              if(workshops[k].checked){
-                workshops[k].checked = false;
-                //if a workshop was already selected before checking main conference, then remove the cost of it
-                totalCost-= workshops[k].getAttribute("data-cost");
-              }
-            }
 
-          }
-          else{
-            // if they choose individual workshop, hide others that have matching times
-            for(let l=1; l<workshops.length; l++){
-              const dateTime = workshops[l].getAttribute("data-day-and-time");
-              if(workshopDayTime === dateTime && workshopName !==workshops[l].name){
-                workshops[l].disabled = true;
-                workshops[l].parentElement.className = 'disabled';
+      }
 
-              }
-            }
-
-          }
-
-        }
-        else{
-          //if workshop is removed, remove the cost from the total and unhide workshops at matching times
-          totalCost -= workshopCost;
-          if(workshopName ==='all'){
-            for(let k=1; k<workshops.length; k++){
-              workshops[k].disabled = false;
-              workshops[k].parentElement.className = '';
-            }
-          }
-          else{
-            for(let l=1; l<workshops.length; l++){
-              const dateTime = workshops[l].getAttribute("data-day-and-time");
-              if(workshopDayTime === dateTime && workshopName !==workshops[l].name){
-                workshops[l].disabled = false;
-                workshops[l].parentElement.className = '';
-              }
-            }
-
-          }
-        }
         //Show the total cost after selections are made
         totalCostField.style.display = 'block';
         totalCostField.innerText = `Total Cost: ${totalCost}`;
-      }
+
       //END OF WORKSHOP SELECTION
 
     });
@@ -209,7 +180,7 @@ document.addEventListener('DOMContentLoaded', (e)=>{
       const entry = e.target.value;
       //combine regex into object to simplify if statements below
       const regExList ={'user-name': /^[a-z]+$/i,'user-email':/^\w+@\w+\.\w+$/i,
-      'user-cc-num':/^\d{4}[-|\s]?\d{4}[-|\s]?\d{4}[-|\s]?\d{4}$/, 'user-zip': /^\d{5}$/, 'user-cvv': /^\d{3}$/};
+      'user-cc-num':/^\d{13,16}|(\d{4}[-|\s]?\d{4}[-|\s]?\d{4}[-|\s]?\d{4})$/, 'user-zip': /^\d{5}$/, 'user-cvv': /^\d{3}$/};
       //test for regex and apply class if valid/not valid
       if(regExList[field]){
         console.log(field);
@@ -229,20 +200,23 @@ document.addEventListener('DOMContentLoaded', (e)=>{
         document.getElementById('error').innerHTML = '';
       }
       //check if name input is empty or already invalidated
-      if(nameInput.value === '' || nameInput.style.className === 'notValid'){
+      if(nameInput.value === '' ){
+        e.preventDefault();
+        createAlertBox('Please enter a name.');
+      }
+      else if(nameInput.style.className === 'notValid'){
         e.preventDefault();
         createAlertBox('Please correct the name field above.');
       }
       //check if email input is empty or already invalidated
-      if(emailInput.value === '' || emailInput.style.className === 'notValid'){
+      if(emailInput.value === ''){
         e.preventDefault();
-        createAlertBox('Please correct the email field above.');
+        createAlertBox('Please enter an email address.');
         //button.parentElement.insertBefore(p, button);
       }
-      //check if t-shirt design is selected
-      if(t_design.value === 'Select Theme'){
+      else if(emailInput.style.className === 'notValid'){
         e.preventDefault();
-        createAlertBox('Please select a t-shirt design.');
+        createAlertBox('The email address is invalid. Please re-enter your email address.');
       }
       //check if an activity is selected by checking if the cost is not 0
       if(totalCost === 0 ){
